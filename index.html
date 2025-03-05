@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Sheets Task Tracker</title>
+    <title>Task Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        input, button { padding: 10px; margin: 10px; font-size: 16px; }
+        ul { list-style: none; padding: 0; }
+        li { background: #f3f3f3; margin: 5px; padding: 10px; border-radius: 5px; }
+    </style>
 </head>
 <body>
 
@@ -14,33 +20,50 @@
     <button onclick="addTask()">Add Task</button>
 
     <h2>Tasks</h2>
-    <ul id="taskList"></ul>
+    <ul id="taskList">Loading tasks...</ul>
 
     <script>
-        const SHEET_URL = "https://script.google.com/macros/s/AKfycbyUL4eGBpzzbGWEdV9_cNf1uJFeNHZYiCOUKUV6qhi4xQkdUWd1O68RA_n6XnP_85n4ww/exec"; // Paste your Google Apps Script URL here
+        const SHEET_URL = "https://script.google.com/macros/s/AKfycbyUL4eGBpzzbGWEdV9_cNf1uJFeNHZYiCOUKUV6qhi4xQkdUWd1O68RA_n6XnP_85n4ww/exec";
 
         async function loadTasks() {
-            let response = await fetch(SHEET_URL);
-            let tasks = await response.json();
-            let taskList = document.getElementById("taskList");
-            taskList.innerHTML = "";
-            tasks.forEach(task => {
-                let li = document.createElement("li");
-                li.textContent = task.task;
-                taskList.appendChild(li);
-            });
+            try {
+                let response = await fetch(SHEET_URL);
+                let tasks = await response.json();
+                let taskList = document.getElementById("taskList");
+                taskList.innerHTML = "";
+                tasks.forEach(task => {
+                    let li = document.createElement("li");
+                    li.textContent = task.task;
+                    taskList.appendChild(li);
+                });
+            } catch (error) {
+                console.error("Error loading tasks:", error);
+                document.getElementById("taskList").innerHTML = "Failed to load tasks.";
+            }
         }
 
         async function addTask() {
-            let task = document.getElementById("taskInput").value;
-            if (task.trim() === "") return;
-            await fetch(SHEET_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ task: task })
-            });
-            document.getElementById("taskInput").value = "";
-            loadTasks();
+            let taskInput = document.getElementById("taskInput");
+            let task = taskInput.value.trim();
+            if (task === "") return;
+
+            try {
+                let response = await fetch(SHEET_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ task: task })
+                });
+                let result = await response.json();
+                if (result.status === "success") {
+                    taskInput.value = "";
+                    loadTasks();
+                } else {
+                    alert("Failed to add task.");
+                }
+            } catch (error) {
+                console.error("Error adding task:", error);
+                alert("Error adding task.");
+            }
         }
 
         loadTasks();
