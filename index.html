@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets Task Tracker</title>
+</head>
+<body>
+
+    <h1>Task Tracker</h1>
+
+    <h2>Add Task</h2>
+    <input type="text" id="taskInput" placeholder="Enter task">
+    <button onclick="addTask()">Add Task</button>
+
+    <h2>Tasks</h2>
+    <ul id="taskList"></ul>
+
+    <script>
+        const SHEET_URL = "https://script.google.com/macros/s/AKfycbyUL4eGBpzzbGWEdV9_cNf1uJFeNHZYiCOUKUV6qhi4xQkdUWd1O68RA_n6XnP_85n4ww/exec"; // Paste your Google Apps Script URL here
+
+        async function loadTasks() {
+            let response = await fetch(SHEET_URL);
+            let tasks = await response.json();
+            let taskList = document.getElementById("taskList");
+            taskList.innerHTML = "";
+            tasks.forEach(task => {
+                let li = document.createElement("li");
+                li.textContent = task.task;
+                taskList.appendChild(li);
+            });
+        }
+
+        async function addTask() {
+            let task = document.getElementById("taskInput").value;
+            if (task.trim() === "") return;
+            await fetch(SHEET_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ task: task })
+            });
+            document.getElementById("taskInput").value = "";
+            loadTasks();
+        }
+
+        loadTasks();
+    </script>
+
+</body>
+</html>
